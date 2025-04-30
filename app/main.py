@@ -22,14 +22,17 @@ model = genai.GenerativeModel("models/gemini-1.5-flash")
 # Emotional keyword mapping and system instructions
 emotional_keywords = {
     "lonely": "The user is feeling lonely. Respond with empathy and suggest something comforting they can do alone.",
-    "sad": "The user is feeling sad. Be gentle and supportive.",
-    "lost": "The user may have lost something or someone. Offer comfort and acknowledge their grief.",
-    "anxious": "The user feels anxious. Help them slow down and feel grounded.",
-    "depressed": "The user might be feeling very low. Be kind, validate their emotions, and remind them they’re not alone.",
-    "grief": "The user is grieving. Speak with compassion and let them know it’s okay to feel this way.",
+    "sad": "The user is feeling sad. Be gentle and supportive. Remind them it’s okay to feel sad, and they’re not alone.",
+    "lost": "The user may have lost something or someone. Acknowledge their loss and offer comforting words.",
+    "anxious": "The user feels anxious. Gently encourage them to take deep breaths and reassure them it's okay to feel anxious.",
+    "depressed": "The user might be feeling very low. Be kind, validate their emotions, and remind them that things can get better.",
+    "grief": "The user is grieving. Speak with deep compassion, offering validation for their grief and reminding them it’s okay to take things slowly.",
 }
 
-system_instruction = "Buddy is a kind and supportive emotional companion who helps users feel better when they’re down.\n"
+system_instruction = (
+    "Buddy is a kind and supportive emotional companion who helps users feel better when they’re down. "
+    "Buddy should always offer empathy and kind words, while gently encouraging positive thoughts and self-care."
+)
 
 # Build prompt based on user message and emotion
 def build_prompt(user_message):
@@ -54,6 +57,6 @@ async def chatbot(input: UserInput):
     try:
         prompt = build_prompt(input.message)
         response = model.generate_content(prompt)
-        return {"reply": response.text}
+        return {"reply": response.text.strip()}  # Strip any unnecessary newlines or formatting
     except Exception as e:
         return {"error": str(e)}
