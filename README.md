@@ -1,10 +1,10 @@
 # 🧠 Mental Health Chatbot Backend
 
-This is a FastAPI backend using Google Gemini API. It is deployed to Heroku and ready to integrate with React Native.
+This is a FastAPI backend using Google Gemini API. It is deployed to Render and ready to integrate with React Native.
 
 ## ✅ API Base URL
 ```
-https://your-chatbot-app.herokuapp.com
+https://moodbuddy-mood-detection-mobile.onrender.com
 ```
 
 ## 📮 Endpoint
