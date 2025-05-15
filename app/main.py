@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from session_handler import load_session, save_session, clear_session
 
 app = FastAPI()
 
@@ -55,8 +56,29 @@ def root():
 @app.post("/chatbot/")
 async def chatbot(input: UserInput):
     try:
-        prompt = build_prompt(input.message)
+        history = load_session()
+        history.append({"sender": "user", "message": input.message})
+
+        prompt = "\n".join(f"{m['sender']}: {m['message']}" for m in history)
+        prompt = f"{system_instruction}\n{prompt}\nbot:"
+
         response = model.generate_content(prompt)
-        return {"reply": response.text.strip()}  # Strip any unnecessary newlines or formatting
+        reply = response.text.strip()
+
+        history.append({"sender": "bot", "message": reply})
+        save_session(history)
+
+        return {"reply": reply}
     except Exception as e:
         return {"error": str(e)}
+
+# Resume session
+@app.get("/chatbot/resume")
+def resume_session():
+    return {"history": load_session()}
+
+# Start new session
+@app.post("/chatbot/new")
+def new_session():
+    clear_session()
+    return {"message": "New conversation started."}
