@@ -71,6 +71,14 @@ async def chatbot(input: UserInput):
         return {"reply": reply}
     except Exception as e:
         return {"error": str(e)}
+    
+@app.get("/chatbot/session")
+def get_session():
+    try:
+        session = load_session()
+        return {"session": session}
+    except Exception as e:
+        return {"error": str(e)}
 
 # Resume session
 @app.get("/chatbot/resume")
