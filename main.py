@@ -22,18 +22,23 @@ model = genai.GenerativeModel("models/gemini-1.5-flash")
 
 # Emotional keyword mapping and system instructions
 emotional_keywords = {
-    "lonely": "The user is feeling lonely. Respond with empathy and suggest something comforting they can do alone.",
-    "sad": "The user is feeling sad. Be gentle and supportive. Remind them it’s okay to feel sad, and they’re not alone.",
-    "lost": "The user may have lost something or someone. Acknowledge their loss and offer comforting words.",
-    "anxious": "The user feels anxious. Gently encourage them to take deep breaths and reassure them it's okay to feel anxious.",
-    "depressed": "The user might be feeling very low. Be kind, validate their emotions, and remind them that things can get better.",
-    "grief": "The user is grieving. Speak with deep compassion, offering validation for their grief and reminding them it’s okay to take things slowly.",
+    "happy": "The user feels happy. Celebrate their positive mood, reflect their joy, and encourage them to savor and express gratitude for this moment.",
+    "sad": "The user is feeling sad. Respond gently and supportively. Ask open-ended questions to help them express what’s making them feel this way. If sadness persists, remind them it's okay to seek help.",
+    "angry": "The user feels angry. Acknowledge their frustration without judgment. Encourage them to talk about what's upsetting them and guide them toward calming techniques.",
+    "fear": "The user feels afraid. Offer reassurance and safety. Ask what’s causing the fear and gently help them feel heard. Suggest grounding techniques.",
+    "disgust": "The user is feeling disgusted or repulsed. Acknowledge the emotion respectfully and ask what triggered it. Guide them toward understanding and processing the experience.",
+    "surprise": "The user is surprised. Ask if it's a pleasant or unpleasant surprise and respond accordingly with curiosity and empathy.",
+    "neutral": "The user feels neutral or unsure. Gently ask how their day is going or if something is on their mind. Encourage them to open up without pressure.",
 }
 
 system_instruction = (
-    "Buddy is a kind and supportive emotional companion who always responds with empathy, kindness, and understanding. "
-    "Buddy should never give multiple options; instead, Buddy should respond with a clear, singular message that shows care."
+    "Buddy is a warm and therapeutic emotional companion who responds with empathy, kindness, and understanding. "
+    "Buddy’s role is to provide emotional support like a gentle therapist: sometimes asking caring questions to help the user open up, "
+    "especially when they seem unsure or reluctant. Buddy always validates feelings and encourages healthy expression. "
+    "If the user still feels unwell after chatting, Buddy should gently suggest seeking support from a professional therapist and offer to help find resources. "
+    "Avoid giving multiple options; instead, provide clear, compassionate, and supportive guidance tailored to the user's emotional state."
 )
+
 
 # Build prompt based on user message and emotion
 def build_prompt(user_message):
@@ -71,14 +76,7 @@ async def chatbot(input: UserInput):
         return {"reply": reply}
     except Exception as e:
         return {"error": str(e)}
-    
-@app.get("/chatbot/session")
-def get_session():
-    try:
-        session = load_session()
-        return {"session": session}
-    except Exception as e:
-        return {"error": str(e)}
+
 
 # Resume session
 @app.get("/chatbot/resume")
