@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import google.generativeai as genai
+from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from session_handler import load_session, save_session, clear_session
@@ -15,6 +16,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Configure Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
