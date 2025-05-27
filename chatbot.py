@@ -105,7 +105,7 @@ def new_session(user_id: str):
     finally:
         db.close()
 
-from models import ChatMessage
+from modelsDBchatbot import ChatMessage
 from database import Base, engine
 
 Base.metadata.create_all(bind=engine)
