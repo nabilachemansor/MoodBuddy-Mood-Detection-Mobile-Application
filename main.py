@@ -4,7 +4,9 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
-from session_handler import load_session, save_session, clear_session
+import json
+from database import SessionLocal
+
 
 app = FastAPI()
 
@@ -43,52 +45,68 @@ system_instruction = (
     "Avoid giving multiple options; instead, provide clear, compassionate, and supportive guidance tailored to the user's emotional state."
 )
 
-
-# Build prompt based on user message and emotion
-def build_prompt(user_message):
-    for keyword, guidance in emotional_keywords.items():
-        if keyword in user_message.lower():
-            return f"{system_instruction}{guidance}\nUser says: '{user_message}'\nBuddy replies:"
-
-    return f"{system_instruction}User says: '{user_message}'\nBuddy replies:"
-
 # Input model for request
 class UserInput(BaseModel):
+    user_id: str
     message: str
+
 
 # Test route
 @app.get("/")
 def root():
     return {"message": "Chatbot is running"}
 
+
 # Chatbot route
 @app.post("/chatbot/")
 async def chatbot(input: UserInput):
     try:
-        history = load_session()
-        history.append({"sender": "user", "message": input.message})
+        db = SessionLocal()
+        user_id = input.user_id  # Add user_id to your UserInput model
+        user_messages = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.timestamp).all()
+        history = [{"sender": m.sender, "message": m.message} for m in user_messages]
 
+        # Build prompt with history
         prompt = "\n".join(f"{m['sender']}: {m['message']}" for m in history)
-        prompt = f"{system_instruction}\n{prompt}\nbot:"
+        prompt = f"{system_instruction}\n{prompt}\nuser: {input.message}\nbot:"
 
         response = model.generate_content(prompt)
         reply = response.text.strip()
 
-        history.append({"sender": "bot", "message": reply})
-        save_session(history)
+        # Save both messages
+        db.add(ChatMessage(user_id=user_id, sender="user", message=input.message))
+        db.add(ChatMessage(user_id=user_id, sender="bot", message=reply))
+        db.commit()
 
         return {"reply": reply}
     except Exception as e:
         return {"error": str(e)}
+    finally:
+        db.close()
 
 
-# Resume session
 @app.get("/chatbot/resume")
-def resume_session():
-    return {"history": load_session()}
+def resume_session(user_id: str):
+    db = SessionLocal()
+    try:
+        messages = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.timestamp).all()
+        return {"session": [{"sender": m.sender, "message": m.message} for m in messages]}
+    finally:
+        db.close()
 
-# Start new session
+
 @app.post("/chatbot/new")
-def new_session():
-    clear_session()
-    return {"message": "New conversation started."}
+def new_session(user_id: str):
+    db = SessionLocal()
+    try:
+        db.query(ChatMessage).filter(ChatMessage.user_id == user_id).delete()
+        db.commit()
+        return {"message": "New conversation started."}
+    finally:
+        db.close()
+
+from models import ChatMessage
+from database import Base, engine
+
+Base.metadata.create_all(bind=engine)
+
