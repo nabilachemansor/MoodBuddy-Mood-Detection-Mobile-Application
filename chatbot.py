@@ -45,10 +45,12 @@ system_instruction = (
     "Avoid giving multiple options; instead, provide clear, compassionate, and supportive guidance tailored to the user's emotional state."
 )
 
-# Input model for request
+from typing import Optional
+
 class UserInput(BaseModel):
-    user_id: str
+    user_id: Optional[str] = "default_user"
     message: str
+
 
 
 # Test route
@@ -63,7 +65,7 @@ session_history = {}
 @app.post("/chatbot/")
 async def chatbot(input: UserInput):
     try:
-        user_id = input.user_id
+        user_id = input.user_id or "default_user"
         message = input.message
 
         # Get history from in-memory store
@@ -88,17 +90,25 @@ async def chatbot(input: UserInput):
         return {"error": str(e)}
 
 
+from fastapi import Request
+
 @app.get("/chatbot/resume")
-def resume_session(user_id: str):
+def resume_session(request: Request):
+    user_id = request.query_params.get("user_id", "default_user")
     history = session_history.get(user_id, [])
     return {"session": history}
 
 
+from pydantic import BaseModel
+
+class NewSessionInput(BaseModel):
+    user_id: Optional[str] = "default_user"
+
 @app.post("/chatbot/new")
-def new_session(user_id: str):
+def new_session(input: NewSessionInput):
+    user_id = input.user_id or "default_user"
     session_history[user_id] = []
     return {"message": "New conversation started (in memory)."}
-
 
 '''
 from modelsDBchatbot import ChatMessage
